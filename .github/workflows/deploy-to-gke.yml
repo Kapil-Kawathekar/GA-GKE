@@ -31,7 +31,7 @@ jobs:
 
       - name: Create Pod on GKE
         run: |
-          kubectl apply -f /k8s/
+          kubectl apply -f k8s/
 
       - name: Verify Pod Status
         run: |
