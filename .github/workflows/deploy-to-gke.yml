@@ -30,10 +30,11 @@ jobs:
     - name: Set GCP Project
       run: gcloud config set project my-kubernetes-project-438008
 
-    # Install gke-gcloud-auth-plugin
+    # Install gke-gcloud-auth-plugin via apt-get
     - name: Install gke-gcloud-auth-plugin
       run: |
-        gcloud components install gke-gcloud-auth-plugin --quiet
+        sudo apt-get update
+        sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
 
     # Access GKE Cluster
     - name: Access GKE Cluster
