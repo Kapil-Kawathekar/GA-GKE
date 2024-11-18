@@ -1,4 +1,4 @@
-name: Deploy to GKE (Dockerized)
+name: Deploy Pod to GKE
 
 on:
   push:
@@ -7,29 +7,32 @@ on:
 
 jobs:
   deploy:
+    name: Deploy Pod to GKE
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    # Step 1: Run in a Dockerized Environment with Pre-installed Tools
-    - name: Deploy Using Dockerized Environment
-      run: |
-        docker run --rm \
-          -v "$(pwd):/workspace" \
-          -v "$HOME/.kube:/root/.kube" \
-          -v "$HOME/.config/gcloud:/root/.config/gcloud" \
-          google/cloud-sdk:latest /bin/bash -c "
-            cd /workspace &&
-            echo '${{ secrets.GCP_SA_KEY }}' | base64 --decode > sa-key.json &&
-            gcloud auth activate-service-account --key-file=sa-key.json &&
-            gcloud auth list &&
-            gcloud config set project my-kubernetes-project-438008 &&
-            gcloud components install gke-gcloud-auth-plugin --quiet &&
-            export USE_GKE_GCLOUD_AUTH_PLUGIN=True &&
-            gcloud container clusters get-credentials vector-cluster --region us-central1-a --project my-kubernetes-project-438008 &&
-            kubectl apply -f k8s/ &&
-            kubectl get pods &&
-            kubectl get hpa
-          "
+      - name: Decode and Set up Google Cloud SDK
+        run: |
+          echo "${{ secrets.GCP_SA_KEY }}" | base64 --decode > $HOME/gcp-key.json
+          gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
+          gcloud config set project my-kubernetes-project-438008
+
+      - name: Authenticate to GKE Cluster
+        run: |
+          gcloud container clusters get-credentials vector-cluster --zone us-central1-a --project my-kubernetes-project-438008
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Create Pod on GKE
+        run: |
+          kubectl apply -f /k8s/
+
+      - name: Verify Pod Status
+        run: |
+          kubectl get pods
