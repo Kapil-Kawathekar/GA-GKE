@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vector-observability_1
+  name: vector-observability-one
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vector-observability_1
+      app: vector-observability-one
   template:
     metadata:
       labels:
-        app: vector-observability_1
+        app: vector-observability-one
     spec:
       containers:
-      - name: vector_1
+      - name: vector-one
         image: gcr.io/my-kubernetes-project-438008/vector-observability:latest
         args: ["--config", "/etc/vector/vector.toml"]
         resources:
