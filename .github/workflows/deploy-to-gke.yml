@@ -1,13 +1,10 @@
 name: Deploy to GKE
 
 on:
-  push:
-    branches:
-      - main  # Automatically deploy changes to the main branch
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to deploy'
+        description: 'Select the branch to deploy'
         required: true
         default: 'main'
 
