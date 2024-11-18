@@ -13,43 +13,62 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    # Write the Service Account Key from Secret
+    # Step 1: Install Google Cloud SDK
+    - name: Install Google Cloud SDK
+      run: |
+        curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-429.0.0-darwin-arm.tar.gz
+        tar -xvzf google-cloud-sdk-429.0.0-darwin-arm.tar.gz
+        ./google-cloud-sdk/install.sh -q
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
+        gcloud version
+
+    # Step 2: Write Service Account Key from Secret
     - name: Write Service Account Key
       run: |
         echo "${{ secrets.GCP_SA_KEY }}" | base64 --decode > sa-key.json
 
-    # Authenticate with GCP using the Service Account Key
+    # Step 3: Authenticate with GCP using the Service Account Key
     - name: Authenticate with GCP
-      run: gcloud auth activate-service-account --key-file=sa-key.json
+      run: |
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
+        gcloud auth activate-service-account --key-file=sa-key.json
 
-    # Verify Active Account
+    # Step 4: Verify Active Account
     - name: Verify Active Account
-      run: gcloud auth list
+      run: |
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
+        gcloud auth list
 
-    # Set GCP Project
+    # Step 5: Set GCP Project
     - name: Set GCP Project
-      run: gcloud config set project my-kubernetes-project-438008
+      run: |
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
+        gcloud config set project my-kubernetes-project-438008
 
-    # Install gke-gcloud-auth-plugin
+    # Step 6: Install gke-gcloud-auth-plugin
     - name: Install gke-gcloud-auth-plugin
       run: |
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
         gcloud components install gke-gcloud-auth-plugin --quiet
 
-    # Access GKE Cluster
+    # Step 7: Access GKE Cluster
     - name: Access GKE Cluster
       run: |
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
         export USE_GKE_GCLOUD_AUTH_PLUGIN=True
         gcloud container clusters get-credentials vector-cluster \
           --region us-central1-a \
           --project my-kubernetes-project-438008
 
-    # Apply Kubernetes YAML Configuration
+    # Step 8: Apply Kubernetes YAML Configuration
     - name: Apply Kubernetes Configuration
       run: |
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
         kubectl apply -f k8s/
 
-    # Verify Deployment
+    # Step 9: Verify Deployment
     - name: Verify Deployment
       run: |
+        export PATH=$PATH:$(pwd)/google-cloud-sdk/bin
         kubectl get pods
         kubectl get hpa
