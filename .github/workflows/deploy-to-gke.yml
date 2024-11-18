@@ -3,7 +3,7 @@ name: Deploy to GKE
 on:
   push:
     branches:
-      - main  # Adjust to the branch you want to trigger deployments
+      - main
 
 jobs:
   deploy:
@@ -13,25 +13,35 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    - name: Set up Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: my-kubernetes-project-438008  # Replace with your GCP project ID
-    
-    - name: Debug Authentication
+    # Step 1: Write the Service Account Key to a JSON file
+    - name: Write Service Account Key
+      run: echo "${{ secrets.GCP_SA_KEY }}" > sa-key.json
+
+    # Step 2: Authenticate with GCP using the Service Account Key
+    - name: Authenticate with GCP
+      run: gcloud auth activate-service-account --key-file=sa-key.json
+
+    # Step 3: Verify Active Account
+    - name: Verify Active Account
       run: gcloud auth list
 
-    - name: Authenticate with GKE
+    # Step 4: Set GCP Project
+    - name: Set GCP Project
+      run: gcloud config set project my-kubernetes-project-438008
+
+    # Step 5: Test Cluster Credentials Access
+    - name: Access GKE Cluster
       run: |
         gcloud container clusters get-credentials vector-cluster \
           --region us-central1-a \
           --project my-kubernetes-project-438008
 
+    # Step 6: Apply Kubernetes YAML Configuration
     - name: Apply Kubernetes Configuration
       run: |
         kubectl apply -f k8s/
 
+    # Step 7: Debug Kubernetes Deployment
     - name: Verify Deployment
       run: |
         kubectl get pods
