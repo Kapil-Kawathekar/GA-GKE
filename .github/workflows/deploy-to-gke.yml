@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
     - name: Checkout Repository
@@ -30,11 +30,10 @@ jobs:
     - name: Set GCP Project
       run: gcloud config set project my-kubernetes-project-438008
 
-    # Install gke-gcloud-auth-plugin via apt-get
+    # Install gke-gcloud-auth-plugin
     - name: Install gke-gcloud-auth-plugin
       run: |
-        sudo apt-get update
-        sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+        gcloud components install gke-gcloud-auth-plugin --quiet
 
     # Access GKE Cluster
     - name: Access GKE Cluster
