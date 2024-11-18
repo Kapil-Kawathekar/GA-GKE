@@ -3,22 +3,32 @@ name: Deploy to GKE
 on:
   push:
     branches:
-      - main
+      - main  # Automatically deploy changes to the main branch
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+
 jobs:
   deploy:
     name: Deploy to GKE
     runs-on: ubuntu-latest
     container:
       image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref_name }}
 
       - name: Decode and Set up Google Cloud SDK
         run: |
           echo "${{ secrets.GCP_SA_KEY }}" | base64 --decode > $HOME/gcp-key.json
           gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
-          gcloud config set project my-kubernetes-project-438008
+          gcloud config set project  my-kubernetes-project-438008
 
       - name: Authenticate to GKE Cluster
         run: |
@@ -27,3 +37,7 @@ jobs:
       - name: Apply Kubernetes Manifests
         run: |
           kubectl apply -f k8s/
+
+      - name: Verify Kubernetes Resources
+        run: |
+          kubectl get all
