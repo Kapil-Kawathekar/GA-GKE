@@ -1,0 +1,67 @@
+# Kubernetes Deployment (vector-deployment.yaml)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-observability_1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector-observability_1
+  template:
+    metadata:
+      labels:
+        app: vector-observability_1
+    spec:
+      containers:
+      - name: vector_1
+        image: gcr.io/my-kubernetes-project-438008/vector-observability:latest
+        args: ["--config", "/etc/vector/vector.toml"]
+        resources:
+          requests:
+            memory: "256Mi"   # Minimum memory each pod will request (512 MiB)
+            cpu: "250m"       # Minimum CPU each pod will request (0.5 CPU core)
+          limits:
+            memory: "1Gi"     # Maximum memory allowed per pod (1 GiB)
+            cpu: "1000m"      # Maximum CPU allowed per pod (1 CPU core)
+        env:
+        - name: GOOGLE_CLOUD_PROJECT_1
+          valueFrom:
+            configMapKeyRef:
+              name: vector-env-config
+              key: GOOGLE_CLOUD_PROJECT_1
+        - name: PUBSUB_SUBSCRIPTION_1
+          valueFrom:
+            configMapKeyRef:
+              name: vector-env-config
+              key: PUBSUB_SUBSCRIPTION_1
+        - name: PUBSUB_SUBSCRIPTION_2
+          valueFrom:
+            configMapKeyRef:
+              name: vector-env-config
+              key: PUBSUB_SUBSCRIPTION_2
+        
+        # - name: GOOGLE_CLOUD_PROJECT_2
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: vector-env-config
+        #       key: GOOGLE_CLOUD_PROJECT_2
+        # - name: PUBSUB_SUBSCRIPTION_2
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: vector-env-config
+        #       key: PUBSUB_SUBSCRIPTION_2
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/var/secrets/gcp/service-account.json"  # This tells Vector where to find the key file
+        volumeMounts:
+        - name: gcp-sa-key
+          mountPath: /var/secrets/gcp  # Ensure the key file is mounted at this location
+          readOnly: true
+        - name: vector-logs
+          mountPath: /var/log/vector
+      volumes:
+      - name: vector-logs
+        emptyDir: {}
+      - name: gcp-sa-key
+        secret:
+          secretName: vector-sa-key
