@@ -1,15 +1,15 @@
-name: Deploy Pod to GKE
+name: Deploy to GKE
 
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
-    name: Deploy Pod to GKE
+    name: Deploy to GKE
     runs-on: ubuntu-latest
-
+    container:
+      image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -19,26 +19,11 @@ jobs:
           echo "${{ secrets.GCP_SA_KEY }}" | base64 --decode > $HOME/gcp-key.json
           gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
           gcloud config set project my-kubernetes-project-438008
-    
-      - name: Install gke-gcloud-auth-plugin
-        run: |
-          # Download and install the gke-gcloud-auth-plugin binary
-          curl -LO https://storage.googleapis.com/artifacts.k8s.io/clients/exec-auth-plugin/v0.6.0/linux/amd64/gke-gcloud-auth-plugin
-          chmod +x gke-gcloud-auth-plugin
-          sudo mv gke-gcloud-auth-plugin /usr/local/bin/
+
       - name: Authenticate to GKE Cluster
         run: |
           gcloud container clusters get-credentials vector-cluster --zone us-central1-a --project my-kubernetes-project-438008
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Create Pod on GKE
+      - name: Apply Kubernetes Manifests
         run: |
           kubectl apply -f k8s/
-
-      - name: Verify Pod Status
-        run: |
-          kubectl get pods
